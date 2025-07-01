@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Fichas</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: .5rem; color: #555; }
+        input, select, button { width: 100%; padding: 0.8rem; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background-color: #218838; }
+        #mensaje { margin-top: 1rem; text-align: center; color: blue; }
+    </style>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/downloadjs@1.4.7"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Generador de Fichas de Paciente</h1>
+        <div class="form-group">
+            <label for="nombre">Nombre y Apellido del Paciente:</label>
+            <input type="text" id="nombre" placeholder="Ej: Perez, Juan">
+        </div>
+        <div class="form-group">
+            <label for="hc">Número de Historia Clínica (HC):</label>
+            <input type="text" id="hc" placeholder="Ej: 123456">
+        </div>
+        <div class="form-group">
+            <label for="plantilla">Seleccionar Plantilla:</label>
+            <select id="plantilla">
+                <option value="plantillas/SETUP_Torax.pdf">Tórax Decúbito Supino</option>
+				<option value="plantillas/SET UP CyC.pdf">CyC Decúbito Supino</option>
+                </select>
+        </div>
+        <button onclick="generarPdf()">Generar y Descargar PDF</button>
+        <p id="mensaje"></p>
+    </div>
+
+    <script>
+        // Función principal que se ejecuta al hacer clic en el botón
+        async function generarPdf() {
+            const mensajeEl = document.getElementById('mensaje');
+            mensajeEl.textContent = 'Procesando...';
+
+            // Obtener los valores de los campos del formulario
+            const nombre = document.getElementById('nombre').value;
+            const hc = document.getElementById('hc').value;
+            const rutaPlantilla = document.getElementById('plantilla').value;
+
+            if (!nombre || !hc) {
+                mensajeEl.textContent = 'Error: El nombre y la HC son obligatorios.';
+                mensajeEl.style.color = 'red';
+                return;
+            }
+
+            try {
+                // Cargar el archivo PDF de la plantilla
+                const existingPdfBytes = await fetch(rutaPlantilla).then(res => res.arrayBuffer());
+
+                // Cargar el documento PDF con la biblioteca pdf-lib
+                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+
+                // Obtener el formulario del PDF
+                const form = pdfDoc.getForm();
+
+                // Rellenar los campos. IMPORTANTE: Usa los nombres exactos de los campos de tu PDF.
+                // Estos son ejemplos, debes cambiarlos por los tuyos.
+				
+				mensajeEl.textContent = '¡Voy a escribir los tb.';
+                mensajeEl.style.color = 'blue';
+				
+                form.getTextField('nombre').setText(nombre);
+                form.getTextField('hc').setText(hc);
+				
+				mensajeEl.textContent = '¡Escribi los tb.';
+                mensajeEl.style.color = 'blue';
+
+
+                // Guardar el PDF modificado en memoria (como bytes)
+                const pdfBytes = await pdfDoc.save();
+
+                // Generar el nombre del archivo de salida
+                const nombreArchivo = `${nombre.replace(/ /g, '_')}_${hc}.pdf`;
+
+                // Usar download.js para iniciar la descarga del archivo en el navegador
+                download(pdfBytes, nombreArchivo, "application/pdf");
+
+                mensajeEl.textContent = '¡PDF generado con éxito! La descarga debería comenzar.';
+                mensajeEl.style.color = 'blue';
+
+            } catch (error) {
+                console.error(error);
+                mensajeEl.textContent = 'Error al generar el PDF. Revisa la consola (F12) para más detalles.';
+                mensajeEl.style.color = 'red';
+            }
+        }
+    </script>
+
+</body>
+</html>
